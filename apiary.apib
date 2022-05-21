@@ -19,8 +19,19 @@ HOST: https://polls.apiblueprint.org/
             "idle": {
               "on": {
                 "START": {
-                  "target": "collect-age"
+                  "target": "init"
                 }
+              }
+            },
+            "init": {
+              "exit": "assignFlowId",
+              "invoke": {
+                "src": "start_flow",
+                "onDone": [
+                  {
+                    "target": "collect-age"
+                  }
+                ]
               }
             },
             "collect-age": {
@@ -29,18 +40,22 @@ HOST: https://polls.apiblueprint.org/
                 "show_screen_set": {
                   "invoke": {
                     "src": "screen_set",
-                    "id": "screen_set"
+                    "data": {
+                      "screen_set": "Default-ProfileUpdate",
+                      "start_screen": "gigya-update-profile-screen"
+                    }
                   },
                   "on": {
                     "AFTER-SUBMIT": {
-                      "target": "server_condition"
+                      "target": "age_condition"
                     }
                   }
                 },
-                "server_condition": {
+                "age_condition": {
                   "invoke": {
                     "src": "transition_api",
-                   },
+                    "id": "age_condition"
+                  },
                   "on": {
                     "ADULT": {
                       "target": "#progressive-profile.adult"
@@ -58,34 +73,43 @@ HOST: https://polls.apiblueprint.org/
                 "collect_newslatter": {
                   "invoke": {
                     "src": "screen_set",
-                    "id": "newslatter"
-                  },
-                  "on": {
-                    "AFTER-SUBMIT": {
-                      "target": "callback"
-                    }
-                  }
-                },
-                "callback": {
-                  "invoke": {
-                    "src": "event_emitter",
-                    "id": "adult",
-                    "onDone": [
-                      {
-                        "target": "#progressive-profile.completed"
+                    "invoke": {
+                      "src": "screen_set",
+                      "data": {
+                        "screen_set": "Default-ProfileUpdate",
+                        "start_screen": "gigya-communication-screen"
                       }
-                    ]
+                    },
+                    "on": {
+                      "AFTER-SUBMIT": {
+                        "target": "callback"
+                      }
+                    }
+                  },
+                  "callback": {
+                    "invoke": {
+                      "src": "event_emitter",
+                      "id": "adult",
+                      "onDone": [
+                        {
+                          "target": "#progressive-profile.completed"
+                        }
+                      ]
+                    }
                   }
                 }
               }
             },
             "child": {
-              "initial": "collect_parent_details",
+              "initial": "collect_child_consent",
               "states": {
                 "collect_parent_details": {
                   "invoke": {
                     "src": "screen_set",
-                    "id": "parent_details"
+                    "data": {
+                      "screen_set": "Default-ProfileUpdate",
+                      "start_screen": "gigya-privacy-screen"
+                    }
                   },
                   "on": {
                     "AFTER-SUBMIT": {
@@ -96,7 +120,9 @@ HOST: https://polls.apiblueprint.org/
                 "callback": {
                   "invoke": {
                     "src": "event_emitter",
-                    "id": "child",
+                    "data": {
+                      "event": "after-child-consent"
+                    },
                     "onDone": [
                       {
                         "target": "#progressive-profile.completed"
@@ -107,21 +133,21 @@ HOST: https://polls.apiblueprint.org/
               }
             },
             "completed": {
-              "initial": "report_completed",
-              "states": {
-                "report_completed": {
-                  "invoke": {
-                    "src": "event_emitter",
-                    "id": "completed"
-                  }
+              "invoke": {
+                "src": "event_emitter",
+                "data": {
+                  "event": "progressive-profile-completed"
                 }
               }
             }
           }
         }
+        
 
 ## Flow Dispatcher [/flows/{flow}/start]
-
++ Parameters
+    + flow: `progressive-profiling` (string, required) - The flow path 
+    
 ### Start the flow [POST] 
 
 + Request (application/json)
@@ -140,7 +166,7 @@ HOST: https://polls.apiblueprint.org/
        + state:`collect-age` (string)`
        + _links (object)
             + *self* (object)
-               + href: a URI
+               + href: /flows/{flow}/start
        
  
 
