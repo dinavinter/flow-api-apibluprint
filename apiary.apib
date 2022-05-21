@@ -3,7 +3,6 @@ HOST: https://polls.apiblueprint.org/
 
 # FlowApi
 
-Polls is a simple API allowing consumers to view polls and vote in them.
 
 ## Flow Plan [/flows/{flow}]
 + Parameters
@@ -12,8 +11,8 @@ Polls is a simple API allowing consumers to view polls and vote in them.
 ### Get a flow plan [GET]
 
 + Response 200 (application/json)
-
-       {
+        
+        {
           "id": "progressive-profile",
           "initial": "idle",
           "states": {
@@ -119,7 +118,9 @@ Polls is a simple API allowing consumers to view polls and vote in them.
               }
             }
           }
-    }
+        }
+
+## Flow Dispatcher [/flows/{flow}/start]
 
 ### Start the flow [POST] 
 
@@ -129,28 +130,25 @@ Polls is a simple API allowing consumers to view polls and vote in them.
         + source:  `checkout-page` (string)
         + locale: `en` (string)
         
-    + Headers
-        user-agent: Mozilla/5.0
+        + Headers
+            user-agent: Mozilla/5.0
 
-+ Response 201 (application/json)
-
-    + Headers 
-            Location: /questions/2
++ Response 201 (application/json) 
         
     + Attributes (`Basic_Response`)
        + id: GUID (string)
        + state:`collect-age` (string)`
-       + _links (array)
-            + *self*
+       + _links (object)
+            + *self* (object)
                + href: a URI
        
  
 
-## Flow Inspector [/flows/{flow}/{id}]
+## Flow Inspector [/flows/{flow}/{id}/{activity}]
 + Parameters
     + flow: `progressive-profiling` (string, required) - The flow path 
-    + id: `progressive-profile.#452232832872` (string, required) - The flow id 
-
+    + id: `452232832872` (string, required) - The flow id 
+    + activity: `#progressive-profile.collect-age` (string, required) - The activity id 
 
 
 ### Transition API [POST]
@@ -160,13 +158,11 @@ Polls is a simple API allowing consumers to view polls and vote in them.
     + Attributes
         + event:  `AFTER-SUBMIT` (string)
         
-    + Headers
-        user-agent: Mozilla/5.0
+        + Headers
+            user-agent: Mozilla/5.0
 
-+ Response 200 (application/json)
++ Response 200 (application/json) 
 
-    + Headers 
-            Location: /questions/2
         
     + Attributes (`Basic_Response`)
        + state:`#progressive-profile.collect-age.server_condition` (string)`
