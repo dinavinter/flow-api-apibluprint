@@ -1,0 +1,191 @@
+FORMAT: 1A
+HOST: https://polls.apiblueprint.org/
+
+# FlowApi
+
+Polls is a simple API allowing consumers to view polls and vote in them.
+
+## Flow Plan [/flows/{flow}]
++ Parameters
+    + flow: `progressive-profiling` (string, required) - The flow path 
+
+### Get a flow plan [GET]
+
++ Response 200 (application/json)
+
+       {
+          "id": "progressive-profile",
+          "initial": "idle",
+          "states": {
+            "idle": {
+              "on": {
+                "START": {
+                  "target": "collect-age"
+                }
+              }
+            },
+            "collect-age": {
+              "initial": "show_screen_set",
+              "states": {
+                "show_screen_set": {
+                  "invoke": {
+                    "src": "screen_set",
+                    "id": "screen_set"
+                  },
+                  "on": {
+                    "AFTER-SUBMIT": {
+                      "target": "server_condition"
+                    }
+                  }
+                },
+                "server_condition": {
+                  "invoke": {
+                    "src": "transition_api",
+                   },
+                  "on": {
+                    "ADULT": {
+                      "target": "#progressive-profile.adult"
+                    },
+                    "CHILD": {
+                      "target": "#progressive-profile.child"
+                    }
+                  }
+                }
+              }
+            },
+            "adult": {
+              "initial": "collect_newslatter",
+              "states": {
+                "collect_newslatter": {
+                  "invoke": {
+                    "src": "screen_set",
+                    "id": "newslatter"
+                  },
+                  "on": {
+                    "AFTER-SUBMIT": {
+                      "target": "callback"
+                    }
+                  }
+                },
+                "callback": {
+                  "invoke": {
+                    "src": "event_emitter",
+                    "id": "adult",
+                    "onDone": [
+                      {
+                        "target": "#progressive-profile.completed"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "child": {
+              "initial": "collect_parent_details",
+              "states": {
+                "collect_parent_details": {
+                  "invoke": {
+                    "src": "screen_set",
+                    "id": "parent_details"
+                  },
+                  "on": {
+                    "AFTER-SUBMIT": {
+                      "target": "callback"
+                    }
+                  }
+                },
+                "callback": {
+                  "invoke": {
+                    "src": "event_emitter",
+                    "id": "child",
+                    "onDone": [
+                      {
+                        "target": "#progressive-profile.completed"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "completed": {
+              "initial": "report_completed",
+              "states": {
+                "report_completed": {
+                  "invoke": {
+                    "src": "event_emitter",
+                    "id": "completed"
+                  }
+                }
+              }
+            }
+          }
+    }
+
+### Start the flow [POST] 
+
++ Request (application/json)
+
+    + Attributes
+        + source:  `checkout-page` (string)
+        + locale: `en` (string)
+        
+    + Headers
+        user-agent: Mozilla/5.0
+
++ Response 201 (application/json)
+
+    + Headers 
+            Location: /questions/2
+        
+    + Attributes (`Basic_Response`)
+       + id: GUID (string)
+       + state:`collect-age` (string)`
+       + _links (array)
+            + *self*
+               + href: a URI
+       
+ 
+
+## Flow Inspector [/flows/{flow}/{id}]
++ Parameters
+    + flow: `progressive-profiling` (string, required) - The flow path 
+    + id: `progressive-profile.#452232832872` (string, required) - The flow id 
+
+
+
+### Transition API [POST]
+
++ Request (application/json)
+
+    + Attributes
+        + event:  `AFTER-SUBMIT` (string)
+        
+    + Headers
+        user-agent: Mozilla/5.0
+
++ Response 201 (application/json)
+
+    + Headers 
+            Location: /questions/2
+        
+    + Attributes (`Basic_Response`)
+       + state:`#progressive-profile.collect-age.server_condition` (string)`
+       + event (enum) 
+         + `ADULT` 
+         + `CHILD` (default)
+       
+       
+           
+## Data Structures
+
+### `Basic_Response` (object)
+
++ callId: `778ff47f3e294778bc7df44dfeeff764`
++ errorCode: 0 (number)
++ apiVersion: 2 (number)
++ statusCode: 200
++ statusReason: `OK` (string)
++ time: `2022-05-15T14:47:36.964Z`
+
+### `With_login_token` (object)
++ login_token : `st2.login_token` (string)
